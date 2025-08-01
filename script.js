@@ -4,8 +4,6 @@ const openBtn = document.getElementById('openBtn');
 const flipBackBtn = document.getElementById('flipBackBtn');
 const confettiContainer = document.getElementById('confetti-container');
 
-const musicToggle = document.getElementById('musicToggle');
-
 // Card flip functionality
 function flipCard() {
     card.classList.toggle('flipped');
@@ -146,7 +144,6 @@ document.head.appendChild(style);
 // Event listeners
 openBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    e.stopPropagation();
     flipCard();
     createConfetti();
     createFireworks();
@@ -158,19 +155,9 @@ openBtn.addEventListener('click', function(e) {
 
 flipBackBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    e.stopPropagation();
     flipCard();
     addButtonEffects(this);
 });
-
-// Enhanced touch support for buttons
-openBtn.addEventListener('touchstart', function(e) {
-    e.preventDefault();
-}, { passive: false });
-
-flipBackBtn.addEventListener('touchstart', function(e) {
-    e.preventDefault();
-}, { passive: false });
 
 // Add card click to flip
 card.addEventListener('click', function(e) {
@@ -184,96 +171,6 @@ card.addEventListener('click', function(e) {
         createFireworks();
     }
 });
-
-// Enhanced touch support for card
-card.addEventListener('touchstart', function(e) {
-    // Prevent default to avoid double-tap zoom
-    e.preventDefault();
-}, { passive: false });
-
-card.addEventListener('touchend', function(e) {
-    // Don't flip if touching buttons
-    if (e.target.closest('button')) {
-        return;
-    }
-    
-    // Small delay to distinguish from swipe
-    setTimeout(() => {
-        flipCard();
-        if (!card.classList.contains('flipped')) {
-            createConfetti();
-            createFireworks();
-        }
-    }, 100);
-});
-
-// Music functionality
-let isMusicPlaying = false;
-let audioContext = null;
-let oscillator = null;
-let gainNode = null;
-
-function createMelody() {
-    try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        gainNode = audioContext.createGain();
-        gainNode.connect(audioContext.destination);
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        
-        const notes = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50]; // C major scale
-        let noteIndex = 0;
-        
-        function playNote() {
-            if (!isMusicPlaying) return;
-            
-            oscillator = audioContext.createOscillator();
-            oscillator.connect(gainNode);
-            oscillator.frequency.setValueAtTime(notes[noteIndex], audioContext.currentTime);
-            oscillator.type = 'sine';
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
-            
-            noteIndex = (noteIndex + 1) % notes.length;
-            
-            setTimeout(playNote, 1000);
-        }
-        
-        playNote();
-    } catch (error) {
-        console.log('Web Audio API not supported');
-    }
-}
-
-function stopMelody() {
-    if (oscillator) {
-        oscillator.stop();
-    }
-    isMusicPlaying = false;
-}
-
-musicToggle.addEventListener('click', function() {
-    if (isMusicPlaying) {
-        stopMelody();
-        musicToggle.classList.add('muted');
-        musicToggle.textContent = '🔇';
-    } else {
-        isMusicPlaying = true;
-        createMelody();
-        musicToggle.classList.remove('muted');
-        musicToggle.textContent = '🎵';
-    }
-});
-
-// Auto-play music when user interacts with the page
-document.addEventListener('click', function() {
-    if (!isMusicPlaying) {
-        isMusicPlaying = true;
-        createMelody();
-        musicToggle.classList.remove('muted');
-        musicToggle.textContent = '🎵';
-    }
-}, { once: true });
 
 // Optional sound effect
 function playSound() {
@@ -314,43 +211,30 @@ document.addEventListener('keydown', function(e) {
 // Touch device support
 let touchStartY = 0;
 let touchEndY = 0;
-let touchStartX = 0;
-let touchEndX = 0;
-let touchStartTime = 0;
 
 document.addEventListener('touchstart', function(e) {
     touchStartY = e.changedTouches[0].screenY;
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartTime = Date.now();
 });
 
 document.addEventListener('touchend', function(e) {
     touchEndY = e.changedTouches[0].screenY;
-    touchEndX = e.changedTouches[0].screenX;
-    const touchEndTime = Date.now();
-    handleSwipe(touchEndTime - touchStartTime);
+    handleSwipe();
 });
 
-function handleSwipe(duration) {
-    const swipeThreshold = 30; // Reduced for easier swiping
-    const timeThreshold = 500; // Max time for swipe
-    const diffY = touchStartY - touchEndY;
-    const diffX = touchStartX - touchEndX;
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartY - touchEndY;
     
-    // Only handle if swipe is fast enough and long enough
-    if (duration < timeThreshold && Math.abs(diffY) > swipeThreshold) {
-        // Make sure it's more vertical than horizontal
-        if (Math.abs(diffY) > Math.abs(diffX)) {
-            if (diffY > 0) {
-                // Swipe up - flip card
-                if (!card.classList.contains('flipped')) {
-                    openBtn.click();
-                }
-            } else {
-                // Swipe down - flip back
-                if (card.classList.contains('flipped')) {
-                    flipBackBtn.click();
-                }
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+            // Swipe up - flip card
+            if (!card.classList.contains('flipped')) {
+                openBtn.click();
+            }
+        } else {
+            // Swipe down - flip back
+            if (card.classList.contains('flipped')) {
+                flipBackBtn.click();
             }
         }
     }
