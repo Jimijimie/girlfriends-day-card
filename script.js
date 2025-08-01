@@ -7,6 +7,18 @@ const confettiContainer = document.getElementById('confetti-container');
 // Card flip functionality
 function flipCard() {
     card.classList.toggle('flipped');
+    
+    // Force reflow for mobile browsers
+    card.offsetHeight;
+    
+    // Ensure proper transform on mobile
+    if (card.classList.contains('flipped')) {
+        card.style.transform = 'rotateY(180deg) translateZ(0)';
+        card.style.webkitTransform = 'rotateY(180deg) translateZ(0)';
+    } else {
+        card.style.transform = 'rotateY(0deg) translateZ(0)';
+        card.style.webkitTransform = 'rotateY(0deg) translateZ(0)';
+    }
 }
 
 // Confetti/Fireworks effect
@@ -171,6 +183,32 @@ card.addEventListener('click', function(e) {
         createFireworks();
     }
 });
+
+// Enhanced touch support for card
+card.addEventListener('touchstart', function(e) {
+    // Prevent default to avoid double-tap zoom
+    e.preventDefault();
+}, { passive: false });
+
+card.addEventListener('touchend', function(e) {
+    // Don't flip if touching buttons
+    if (e.target.closest('button')) {
+        return;
+    }
+    
+    // Small delay to distinguish from swipe
+    setTimeout(() => {
+        flipCard();
+        if (!card.classList.contains('flipped')) {
+            createConfetti();
+            createFireworks();
+        }
+    }, 100);
+});
+
+// Force hardware acceleration for mobile
+card.style.transform = 'translateZ(0)';
+card.style.webkitTransform = 'translateZ(0)';
 
 // Optional sound effect
 function playSound() {
